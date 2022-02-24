@@ -1,9 +1,11 @@
+require "byebug"
 require "colorize"
 require_relative "0_tile"
 
 class Board
     def self.from_file(puzzle_name)
-        layout = File.readlines(puzzle_name).map(&:chomp).map { |line| line.split("") }
+        address = "./puzzle_files/" + puzzle_name
+        layout = File.readlines(address).map(&:chomp).map { |line| line.split("") }
         layout.map do |row|
             row.map do |tile|
                 value = tile.to_i
@@ -69,7 +71,12 @@ class Board
     end
 
     def legal_position(position)
-        !self[position].given
+        is_legal = !self[position].given
+        unless is_legal
+            text = "\nYou're trying to modify a given position, please chose another"
+            puts text.red.bold
+        end
+        is_legal
     end
 
     def get_value
@@ -85,5 +92,11 @@ class Board
             end
         end
         value
+    end
+
+    def set_value(position, new_value)
+        is_legal = self.legal_position(position)
+        self[position] = new_value if is_legal
+        is_legal
     end
 end
