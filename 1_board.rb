@@ -20,6 +20,8 @@ class Board
         @grid = Board.from_file(puzzle_name)
     end
 
+    attr_reader :grid
+
     def render
         header = "  ".light_white.on_light_black.bold
         (0..8).each do |i|
@@ -98,5 +100,108 @@ class Board
         is_legal = self.legal_position(position)
         self[position] = new_value if is_legal
         is_legal
+    end
+
+    def get_row_sectors
+        row_sectors = Hash.new { |h, k| h[k] = [] }
+        @grid.each.with_index do |row, i|
+            current_row = row.select { |tile| tile if tile.value != 0 }
+            row_sectors[i] = current_row.map { |tile| tile.value }
+        end
+        @row_sectors = row_sectors
+    end
+
+    def get_col_sectors
+        col_sectors = Hash.new { |h, k| h[k] = [] }
+        transposed = @grid.transpose
+        transposed.each.with_index do |col, i|
+            current_col = col.select { |tile| tile if tile.value != 0 }
+            col_sectors[i] = current_col.map { |tile| tile.value }
+        end
+        @col_sectors = col_sectors
+    end
+
+    def get_quadrant_index(row, col)
+        if row < 3 && col < 3
+            target_quadrant = 0
+        elsif row < 3 && col < 6
+            target_quadrant = 1
+        elsif row < 3 && col < 9
+            target_quadrant = 2
+        elsif row < 6 && col < 3
+            target_quadrant = 3
+        elsif row < 6 && col < 6
+            target_quadrant = 4
+        elsif row < 6 && col < 9
+            target_quadrant = 5
+        elsif row < 9 && col < 3
+            target_quadrant = 6
+        elsif row < 9 && col < 6
+            target_quadrant = 7
+        else
+            target_quadrant = 8
+        end
+        target_quadrant
+    end
+
+    def get_quadrant_sectors
+        quadrant_sectors = Hash.new { |h, k| h[k] = [] }
+
+        @grid.each.with_index do |row, ri|
+            row.each.with_index do |tile, ci|
+                if tile.value != 0
+                    target_quadrant = self.get_quadrant_index(ri, ci)
+                    quadrant_sectors[target_quadrant] << tile.value
+                end
+            end
+        end
+        @quadrant_sectors = quadrant_sectors
+    end
+    
+    def get_sectors
+        self.get_col_sectors
+        self.get_row_sectors
+        self.get_quadrant_sectors
+        true
+    end
+
+    def valid_row?(position, new_value)
+        row, col = position
+        is_valid = !@row_sectors[row].include?(new_value)
+        unless is_valid
+            text = "\nRow already contains that value!"
+            puts text.red.bold
+        end
+        is_valid
+    end
+
+    def valid_col?(position, new_value)
+        row, col = position
+        is_valid = !@col_sectors[col].include?(new_value)
+        unless is_valid
+            text = "\nColumn already contains that value!"
+            puts text.red.bold
+        end
+        is_valid
+    end
+
+    def valid_quadrant?(position, new_value)
+        row, col = position
+        quadrant = get_quadrant_index(row, col)
+        is_valid = !@quadrant_sectors[quadrant].include?(new_value)
+        unless is_valid
+            text = "\nQuadrant already contains that value!"
+            puts text.red.bold
+        end
+        is_valid
+    end
+
+    def valid_move?(position, new_value)
+        args = [position, new_value]
+        is_valid = self.valid_row?(*args) && self.valid_col?(*args) && self.valid_quadrant?(*args)
+        is_valid
+    end
+
+    def update_sectors
     end
 end
