@@ -21,6 +21,7 @@ class Board
     end
 
     attr_reader :grid
+    attr_accessor :row_sectors
 
     def render
         header = "  ".light_white.on_light_black.bold
@@ -83,11 +84,11 @@ class Board
 
     def get_value
         abc = ("a".."z").to_a
-        puts "\nPlease enter the value for this position:"
+        puts "\nPlease enter the value for this position (enter 0 to reset a tile):"
         valid_input = false
         until valid_input
             value = gets.chomp.to_i
-            if (1..9).include?(value)
+            if (0..9).include?(value)
                 valid_input = true
             else
                 puts "Invalid input. Please only enter numbers from 1-9"
@@ -103,20 +104,20 @@ class Board
     end
 
     def get_row_sectors
-        row_sectors = Hash.new { |h, k| h[k] = [] }
+        row_sectors = Hash.new { |h, k| h[k] = Set.new }
         @grid.each.with_index do |row, i|
             current_row = row.select { |tile| tile if tile.value != 0 }
-            row_sectors[i] = current_row.map { |tile| tile.value }
+            current_row.each { |tile| row_sectors[i] << tile.value }
         end
         @row_sectors = row_sectors
     end
 
     def get_col_sectors
-        col_sectors = Hash.new { |h, k| h[k] = [] }
+        col_sectors = Hash.new { |h, k| h[k] = Set.new }
         transposed = @grid.transpose
         transposed.each.with_index do |col, i|
             current_col = col.select { |tile| tile if tile.value != 0 }
-            col_sectors[i] = current_col.map { |tile| tile.value }
+            current_col.each { |tile| col_sectors[i] << tile.value }
         end
         @col_sectors = col_sectors
     end
@@ -145,7 +146,7 @@ class Board
     end
 
     def get_quadrant_sectors
-        quadrant_sectors = Hash.new { |h, k| h[k] = [] }
+        quadrant_sectors = Hash.new { |h, k| h[k] = Set.new }
 
         @grid.each.with_index do |row, ri|
             row.each.with_index do |tile, ci|
@@ -202,6 +203,7 @@ class Board
         is_valid
     end
 
-    def update_sectors
+    def solved?
+        
     end
 end
