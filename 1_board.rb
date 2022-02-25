@@ -1,5 +1,5 @@
-require "byebug"
 require "colorize"
+require "set"
 require_relative "0_tile"
 
 class Board
@@ -20,8 +20,7 @@ class Board
         @grid = Board.from_file(puzzle_name)
     end
 
-    attr_reader :grid
-    attr_accessor :row_sectors
+    attr_reader :quadrant_sectors
 
     def render
         header = "  ".light_white.on_light_black.bold
@@ -59,21 +58,7 @@ class Board
         @grid[row][col].set_value(new_value)
     end
 
-    def get_pos
-        puts "\nPlease enter the position to update the value (example '3,4'):"
-        valid_input = false
-        until valid_input
-            position = gets.chomp.split(",").map(&:to_i)
-            if position.length == 2 && position.all? { |coord| (0..8).include?(coord) }
-                valid_input = true
-            else
-                puts "Invalid input. Please try again"
-            end
-        end
-        position
-    end
-
-    def legal_position(position)
+    def legal_position?(position)
         is_legal = !self[position].given
         unless is_legal
             text = "\nYou're trying to modify a given position, please chose another"
@@ -82,23 +67,8 @@ class Board
         is_legal
     end
 
-    def get_value
-        abc = ("a".."z").to_a
-        puts "\nPlease enter the value for this position (enter 0 to reset a tile):"
-        valid_input = false
-        until valid_input
-            value = gets.chomp.to_i
-            if (0..9).include?(value)
-                valid_input = true
-            else
-                puts "Invalid input. Please only enter numbers from 1-9"
-            end
-        end
-        value
-    end
-
     def set_value(position, new_value)
-        is_legal = self.legal_position(position)
+        is_legal = self.legal_position?(position)
         self[position] = new_value if is_legal
         is_legal
     end
@@ -199,11 +169,11 @@ class Board
 
     def valid_move?(position, new_value)
         args = [position, new_value]
-        is_valid = self.valid_row?(*args) && self.valid_col?(*args) && self.valid_quadrant?(*args)
+        is_valid = self.valid_quadrant?(*args) && self.valid_row?(*args) && self.valid_col?(*args)
         is_valid
     end
 
     def solved?
-        
+        @row_sectors.values.all? { |row| row.size == 9 }
     end
 end
